@@ -1,12 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:clima/utilities/constants.dart';
+import 'package:clima/services/weather.dart';
+import 'package:clima/screens/city_screen.dart';
 
 class LocationScreen extends StatefulWidget {
+  LocationScreen({this.locationWeather});
+  final locationWeather;
+
   @override
   _LocationScreenState createState() => _LocationScreenState();
 }
 
 class _LocationScreenState extends State<LocationScreen> {
+  WeatherModel weather = WeatherModel();
+  late int temperature;
+  late String weatherIcon;
+  late String city;
+  late String theMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    updateUi(widget.locationWeather);
+  }
+
+  void updateUi(dynamic weatherData) {
+    setState(() {
+      if (weatherData == null) {
+        temperature = 0;
+        weatherIcon = 'Error';
+        theMessage = "Error getting report";
+        city = '';
+        return;
+      }
+    });
+
+    double temp = weatherData['main']['temp'];
+    temperature = temp.toInt();
+    var condition = weatherData['weather'][0]['id'];
+    theMessage = weather.getMessage(temperature);
+    weatherIcon = weather.getWeatherIcon(condition);
+    city = weatherData['name'];
+
+    print(temperature);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,7 +54,9 @@ class _LocationScreenState extends State<LocationScreen> {
             image: AssetImage('images/location_background.jpg'),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-                Colors.white.withOpacity(0.8), BlendMode.dstATop),
+              Colors.white.withValues(alpha: 0.8),
+              BlendMode.dstATop,
+            ),
           ),
         ),
         constraints: BoxConstraints.expand(),
@@ -28,19 +68,31 @@ class _LocationScreenState extends State<LocationScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  FlatButton(
-                    onPressed: () {},
-                    child: Icon(
-                      Icons.near_me,
-                      size: 50.0,
-                    ),
+                  TextButton(
+                    onPressed: () async {
+                      var weatherData = await weather.getLocationWeather();
+                      updateUi(weatherData);
+                    },
+                    child: Icon(Icons.near_me, size: 50.0),
                   ),
-                  FlatButton(
-                    onPressed: () {},
-                    child: Icon(
-                      Icons.location_city,
-                      size: 50.0,
-                    ),
+                  TextButton(
+                    onPressed: () async {
+                      var typedName = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return CityScreen();
+                          },
+                        ),
+                      );
+                      if (typedName != null) {
+                        var weatherData = await weather.getCityWeather(
+                          typedName,
+                        );
+                        updateUi(weatherData);
+                      }
+                    },
+                    child: Icon(Icons.location_city, size: 50.0),
                   ),
                 ],
               ),
@@ -48,21 +100,15 @@ class _LocationScreenState extends State<LocationScreen> {
                 padding: EdgeInsets.only(left: 15.0),
                 child: Row(
                   children: <Widget>[
-                    Text(
-                      '32°',
-                      style: kTempTextStyle,
-                    ),
-                    Text(
-                      '☀️',
-                      style: kConditionTextStyle,
-                    ),
+                    Text('$temperature°', style: kTempTextStyle),
+                    Text(weatherIcon, style: kConditionTextStyle),
                   ],
                 ),
               ),
               Padding(
                 padding: EdgeInsets.only(right: 15.0),
                 child: Text(
-                  "It's 🍦 time in San Francisco!",
+                  "$theMessage time in $city!",
                   textAlign: TextAlign.right,
                   style: kMessageTextStyle,
                 ),
