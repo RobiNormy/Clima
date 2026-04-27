@@ -1,27 +1,25 @@
 import 'package:clima/services/location.dart';
-import 'package:clima/screens/location_screen.dart';
 import 'package:clima/services/networking.dart';
-const API_KEY  = '79bcfe52e9f31fc2af97d84032ba1caf';
-const theUrl = "https://api.openweathermap.org/data/2.5/weather";
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WeatherModel {
-
-  Future <dynamic> getCityWeather(String cityName)async{
-    var url  = "$theUrl?q=$cityName&appid=$API_KEY&units=metric";
+  Future<dynamic> getCityWeather(String cityName) async {
+    var url =
+        "${dotenv.get('THE_URL')}?q=$cityName&appid=${dotenv.get('API_KEY')}&units=metric";
     NetworkHelper networkHelper = NetworkHelper(url);
     var weatherData = await networkHelper.getData();
     return weatherData;
   }
 
-  Future <dynamic> getLocationWeather() async{
-
+  Future<dynamic> getLocationWeather() async {
     Location myLocation = Location();
     await myLocation.getCurrentLocation();
-    NetworkHelper networkHelper = NetworkHelper("$theUrl?lat=${myLocation.latitude}&lon=${myLocation.longitude}&appid=$API_KEY&units=metric");
+    NetworkHelper networkHelper = NetworkHelper(
+      "${dotenv.get('THE_URL')}?lat=${myLocation.latitude}&lon=${myLocation.longitude}&appid=${dotenv.get('API_KEY')}&units=metric",
+    );
     var weatherData = await networkHelper.getData();
 
     return weatherData;
-
   }
 
   String getWeatherIcon(int condition) {
